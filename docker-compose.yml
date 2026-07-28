@@ -1,0 +1,28 @@
+services:
+  bot:
+    build: .
+    image: vaqtuz-finance-bot:latest
+    container_name: vaqtuz-finance-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Baza konteyner ichida doim shu yerda — payments_data volume'ida saqlanadi
+      DB_PATH: /data/payments.db
+    volumes:
+      - payments_data:/data
+    stop_grace_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  # Named volume — bind-mount emas. Sababi: konteyner root'siz (uid 10001)
+  # ishlaydi, bind-mount esa Linux'da root egaligida yaratilib yozishga
+  # ruxsat bermay qo'yadi. Named volume image'dagi /data huquqlarini oladi.
+  # Zaxira nusxa olish uchun: make backup
+  payments_data:
+
+# Bot polling orqali ishlaydi — hech qanday port ochish yoki domen kerak emas.
