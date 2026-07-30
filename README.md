@@ -55,7 +55,7 @@ ruxsat bermaydi.
 | `GROUP_CHAT_ID` | yo'q | — | So'rovlar keladigan guruh (manfiy raqam). Bo'sh bo'lsa — har qanday guruh |
 | `REPORT_CHAT_ID` | yo'q | `ADMIN_ID` | Hisobotlar yuboriladigan chat |
 | `ANTHROPIC_API_KEY` | yo'q | — | Bo'sh bo'lsa AI tahlil ham, chekni avtomatik o'qish ham o'chiq |
-| `AI_MODEL` | yo'q | `claude-opus-5` | Arzonroq: `claude-sonnet-5`, `claude-haiku-4-5` |
+| `AI_MODEL` | yo'q | `claude-haiku-4-5` | Aniqroq kerak bo'lsa: `claude-sonnet-5`, `claude-opus-5` |
 | `TZ` | yo'q | `Asia/Tashkent` | |
 | `DAILY_REPORT_TIME` | yo'q | `23:00` | HH:MM |
 | `WEEKLY_REPORT_TIME` | yo'q | `23:05` | Yakshanba kuni |

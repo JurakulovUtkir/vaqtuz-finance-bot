@@ -8,7 +8,7 @@ from datetime import time as dtime
 from typing import Mapping
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-DEFAULT_AI_MODEL = "claude-opus-5"
+DEFAULT_AI_MODEL = "claude-haiku-4-5"
 DEFAULT_TIMEZONE = "Asia/Tashkent"
 DEFAULT_DB_PATH = "/data/payments.db"
 DEFAULT_LOG_LEVEL = "INFO"

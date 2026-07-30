@@ -90,6 +90,9 @@ class ReceiptReader:
     def __init__(self, api_key: str, model: str) -> None:
         self._model = model
         self._client = None
+        # Haiku kabi arzon modellar `effort` ni qo'llamaydi — birinchi 400 dan
+        # keyin usiz davom etamiz, model ro'yxatini kodga yozib qo'ymaymiz
+        self._supports_effort = True
         if not api_key:
             logger.info("ANTHROPIC_API_KEY yo'q — chek rasmi avtomatik o'qilmaydi.")
         elif anthropic is None:
@@ -112,14 +115,25 @@ class ReceiptReader:
             return None
 
     def _read_sync(self, image_bytes: bytes, media_type: str) -> ReceiptData | None:
+        try:
+            return self._request(image_bytes, media_type)
+        except Exception as error:  # noqa: BLE001 - quyida faqat effort xatosini ushlaymiz
+            if self._supports_effort and "effort" in str(error):
+                logger.info("%s modeli effort parametrini qo'llamaydi — usiz davom etamiz", self._model)
+                self._supports_effort = False
+                return self._request(image_bytes, media_type)
+            raise
+
+    def _request(self, image_bytes: bytes, media_type: str) -> ReceiptData | None:
         assert self._client is not None
+        output_config: dict = {"format": {"type": "json_schema", "schema": RECEIPT_SCHEMA}}
+        if self._supports_effort:
+            output_config["effort"] = "low"
+
         response = self._client.messages.create(
             model=self._model,
             max_tokens=MAX_TOKENS,
-            output_config={
-                "effort": "low",
-                "format": {"type": "json_schema", "schema": RECEIPT_SCHEMA},
-            },
+            output_config=output_config,
             messages=[
                 {
                     "role": "user",

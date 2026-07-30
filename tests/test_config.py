@@ -112,5 +112,5 @@ def test_reaction_override():
     assert settings.reaction_paid == "💯"
 
 
-def test_default_ai_model_is_opus():
-    assert load_settings(VALID).ai_model == "claude-opus-5"
+def test_default_ai_model_is_the_cheap_one():
+    assert load_settings(VALID).ai_model == "claude-haiku-4-5"
