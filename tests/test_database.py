@@ -87,6 +87,42 @@ def test_get_between_filters_by_created_at(db):
     assert [r.message_id for r in rows] == [101]
 
 
+def test_get_by_id(db):
+    request_id = _add(db)
+    assert db.get_by_id(request_id).id == request_id
+    assert db.get_by_id(999) is None
+
+
+def test_second_receipt_replaces_the_first(db):
+    """Bir so'rovga bir nechta chek tashlansa oxirgisi kuchda qoladi."""
+    request_id = _add(db, summa=60000)
+    db.mark_paid(request_id, "birinchi", 60000, datetime.now(TZ))
+    db.mark_paid(request_id, "ikkinchi", 60600, datetime.now(TZ))
+
+    found = db.get_by_id(request_id)
+    assert found.paid_photo_file_id == "ikkinchi"
+    assert found.actual_summa == 60600
+    assert found.komissiya == 600
+
+
+def test_ai_fields_are_stored(db):
+    request_id = _add(db, summa=60000)
+    db.mark_paid(
+        request_id, "photo", 60000, datetime.now(TZ), ai_summa=60000, ai_izoh="ishonch: yuqori"
+    )
+    found = db.get_by_id(request_id)
+    assert found.ai_summa == 60000
+    assert found.ai_izoh == "ishonch: yuqori"
+
+
+def test_ai_fields_default_to_none(db):
+    request_id = _add(db)
+    db.mark_paid(request_id, "photo", None, datetime.now(TZ))
+    found = db.get_by_id(request_id)
+    assert found.ai_summa is None
+    assert found.ai_izoh is None
+
+
 def test_init_is_idempotent(tmp_path):
     path = str(tmp_path / "twice.db")
     Database(path).init()

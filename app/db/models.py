@@ -26,6 +26,8 @@ class PaymentRequest:
     paid_photo_file_id: str | None
     actual_summa: int
     komissiya: int
+    ai_summa: int | None
+    ai_izoh: str | None
 
     @classmethod
     def from_row(cls, row: sqlite3.Row) -> "PaymentRequest":
@@ -45,6 +47,8 @@ class PaymentRequest:
             paid_photo_file_id=row["paid_photo_file_id"],
             actual_summa=row["actual_summa"] or 0,
             komissiya=row["komissiya"] or 0,
+            ai_summa=row["ai_summa"],
+            ai_izoh=row["ai_izoh"],
         )
 
     @property

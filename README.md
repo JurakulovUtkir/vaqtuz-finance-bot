@@ -54,12 +54,16 @@ ruxsat bermaydi.
 | `ADMIN_ID` | ha | — | @userinfobot'dan. Faqat shu odam chek tashlab to'lovni tasdiqlay oladi |
 | `GROUP_CHAT_ID` | yo'q | — | So'rovlar keladigan guruh (manfiy raqam). Bo'sh bo'lsa — har qanday guruh |
 | `REPORT_CHAT_ID` | yo'q | `ADMIN_ID` | Hisobotlar yuboriladigan chat |
-| `ANTHROPIC_API_KEY` | yo'q | — | Bo'sh bo'lsa hisobotlar AI tahlilisiz ketadi |
-| `AI_MODEL` | yo'q | `claude-haiku-4-5-20251001` | |
+| `ANTHROPIC_API_KEY` | yo'q | — | Bo'sh bo'lsa AI tahlil ham, chekni avtomatik o'qish ham o'chiq |
+| `AI_MODEL` | yo'q | `claude-haiku-4-5` | Aniqroq kerak bo'lsa: `claude-sonnet-5`, `claude-opus-5` |
 | `TZ` | yo'q | `Asia/Tashkent` | |
 | `DAILY_REPORT_TIME` | yo'q | `23:00` | HH:MM |
 | `WEEKLY_REPORT_TIME` | yo'q | `23:05` | Yakshanba kuni |
 | `MONTHLY_CHECK_TIME` | yo'q | `23:10` | Har oyning 1-sanasida o'tgan oy hisoboti |
+| `REACTION_RECEIVED` | yo'q | `👀` | So'rov qabul qilinganda |
+| `REACTION_PAID` | yo'q | `👌` | To'lov tasdiqlanganda |
+| `NETWORK_TIMEOUT` | yo'q | `30` | Soniya. Telegram'ga yo'l beqaror bo'lsa oshiring |
+| `SEND_RETRIES` | yo'q | `3` | Yuborish necha marta qayta urinilsin |
 | `LOG_LEVEL` | yo'q | `INFO` | |
 
 Sozlama noto'g'ri bo'lsa bot **darhol tushunarli xato bilan to'xtaydi**, yarim
@@ -82,14 +86,28 @@ Yorliqlar o'zbekcha ham, ruscha ham bo'lishi mumkin (`Ресурс`, `Проек
 `Сумма`, `Карта`), tartibi ahamiyatsiz, qiymat keyingi qatorda ham bo'lishi
 mumkin. To'rttala maydon topilmasa bot xabarni e'tiborsiz qoldiradi.
 
+So'rovni ko'rgach bot xabarga **👀** reaksiyasini qo'yadi — guruhni matn bilan
+to'ldirmaslik uchun javob yozmaydi.
+
 **To'lovni tasdiqlash** (faqat admin): **original so'rov xabariga** reply qilib
-chek rasmini yuboring (botning "qabul qilindi" javobiga emas).
+chek rasmini yuboring (botning javobiga emas). Bot reaksiyani **👌** ga
+almashtiradi va qisqa tasdiq yozadi.
 
-**Komissiya**: bank 60 000 o'rniga 60 600 yechgan bo'lsa, chek rasmining izohiga
-(caption) `60600` deb yozing — bot farqni komissiya sifatida hisoblab, hisobotda
-alohida ko'rsatadi.
+**Summa qayerdan olinadi** (shu tartibda):
 
-**Buyruqlar**: `/bugun`, `/hafta`, `/oy`, `/kutilmoqda`
+1. Rasm izohiga (caption) raqam yozsangiz — o'sha ishlatiladi
+2. Izoh bo'lmasa va `ANTHROPIC_API_KEY` sozlangan bo'lsa — bot chek rasmidan
+   summani o'zi o'qiydi
+3. Ikkalasi ham bo'lmasa — so'ralgan summa yoziladi, komissiya 0
+
+**Nomuvofiqlik nazorati**: o'tkazilgan summa so'ralganidan 5% dan ko'proq farq
+qilsa yoki kam bo'lsa, bot ⚠️ bilan ogohlantiradi. Kichik ortiqcha farq
+komissiya deb hisoblanadi.
+
+Bitta so'rovga bir nechta chek tashlansa — **oxirgisi** kuchda qoladi.
+
+**Buyruqlar** (faqat `ADMIN_ID` uchun): `/bugun`, `/hafta`, `/oy`,
+`/kutilmoqda`, `/chek 14`
 
 ---
 
@@ -105,21 +123,26 @@ app/
 │   └── database.py      SQLite qatlami, migratsiyalar
 ├── domain/              sof mantiq — Telegram'ga bog'liq emas, test qilinadi
 │   ├── parsing.py       xabardan maydonlarni ajratish
-│   ├── formatting.py
+│   ├── formatting.py    summa, kanal linki, foiz
 │   ├── periods.py       kun/hafta/oy oraliqlari
+│   ├── analytics.py     kanal/mijoz kesimi, narx dinamikasi
+│   ├── reconciliation.py summalarni solishtirish, tasdiq matni
 │   └── reports.py       hisobot matni
-├── ai/insight.py        Claude tahlili (ixtiyoriy, bloklamaydigan)
+├── ai/
+│   ├── insight.py       hisobot tahlili (ixtiyoriy)
+│   └── vision.py        chek rasmidan summa o'qish (ixtiyoriy)
 └── bot/
     ├── application.py   handler va job'larni ro'yxatga olish
     ├── deps.py          umumiy bog'liqliklar
+    ├── net.py           tarmoq xatoligida qayta urinish
     ├── reporting.py     hisobot + AI izohi
     ├── jobs.py          avtomatik hisobotlar
     └── handlers/
         ├── requests.py  guruhdagi so'rovlar
         ├── receipts.py  admin cheki
-        ├── commands.py  /bugun, /hafta, /oy, /kutilmoqda
+        ├── commands.py  /bugun, /hafta, /oy, /kutilmoqda, /chek
         └── errors.py
-tests/                   49 ta test
+tests/                   83 ta test
 legacy/telegram_bot.py   eski bitta faylli versiya (o'chirsa bo'ladi)
 ```
 

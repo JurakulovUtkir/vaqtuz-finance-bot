@@ -8,11 +8,28 @@ from datetime import datetime
 from telegram.ext import Application, ContextTypes
 
 from app.bot.deps import get_deps
+from app.bot.net import send_with_retry
 from app.bot.reporting import compose_report, daily_title, monthly_title, weekly_title
 from app.config import WEEKLY_REPORT_WEEKDAY, Settings
-from app.domain.periods import day_range, previous_month_range, week_range
+from app.domain.periods import (
+    day_range,
+    previous_month_range,
+    previous_week_range,
+    week_range,
+)
 
 logger = logging.getLogger(__name__)
+
+
+async def _deliver(context: ContextTypes.DEFAULT_TYPE, text: str, label: str) -> None:
+    deps = get_deps(context)
+    sent = await send_with_retry(
+        lambda: context.bot.send_message(chat_id=deps.settings.report_chat_id, text=text),
+        attempts=deps.settings.send_retries,
+        description=label,
+    )
+    if sent is None:
+        logger.error("%s yuborilmadi — tarmoq muammosi", label)
 
 
 async def send_daily_report(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -20,15 +37,17 @@ async def send_daily_report(context: ContextTypes.DEFAULT_TYPE) -> None:
     now = datetime.now(deps.settings.timezone)
     start, end = day_range(now)
     text = await compose_report(deps, daily_title(now), start, end)
-    await context.bot.send_message(chat_id=deps.settings.report_chat_id, text=text)
+    await _deliver(context, text, "Kunlik hisobot")
 
 
 async def send_weekly_report(context: ContextTypes.DEFAULT_TYPE) -> None:
     deps = get_deps(context)
     now = datetime.now(deps.settings.timezone)
     start, end = week_range(now)
-    text = await compose_report(deps, weekly_title(start, end), start, end)
-    await context.bot.send_message(chat_id=deps.settings.report_chat_id, text=text)
+    text = await compose_report(
+        deps, weekly_title(start, end), start, end, previous=previous_week_range(now)
+    )
+    await _deliver(context, text, "Haftalik hisobot")
 
 
 async def send_monthly_report_if_due(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -38,8 +57,10 @@ async def send_monthly_report_if_due(context: ContextTypes.DEFAULT_TYPE) -> None
     if now.day != 1:
         return
     start, end = previous_month_range(now)
-    text = await compose_report(deps, monthly_title(start), start, end)
-    await context.bot.send_message(chat_id=deps.settings.report_chat_id, text=text)
+    # O'tgan oyni undan ham oldingi oy bilan solishtiramiz
+    previous = previous_month_range(start.replace(day=1))
+    text = await compose_report(deps, monthly_title(start), start, end, previous=previous)
+    await _deliver(context, text, "Oylik hisobot")
 
 
 def register_jobs(application: Application, settings: Settings) -> None:

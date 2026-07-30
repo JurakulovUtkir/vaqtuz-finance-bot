@@ -1,7 +1,13 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from app.domain.periods import day_range, month_range, previous_month_range, week_range
+from app.domain.periods import (
+    day_range,
+    month_range,
+    previous_month_range,
+    previous_week_range,
+    week_range,
+)
 
 TZ = ZoneInfo("Asia/Tashkent")
 
@@ -29,6 +35,19 @@ def test_week_range_on_sunday_covers_current_week():
     start, end = week_range(sunday)
     assert start == _dt(2026, 7, 27, 0)
     assert start <= sunday < end
+
+
+def test_previous_week_range():
+    start, end = previous_week_range(_dt(2026, 7, 28))  # seshanba
+    assert start == _dt(2026, 7, 20, 0)  # o'tgan dushanba
+    assert end == _dt(2026, 7, 27, 0)  # joriy dushanba
+
+
+def test_previous_week_is_adjacent_to_current():
+    now = _dt(2026, 7, 28)
+    prev_start, prev_end = previous_week_range(now)
+    cur_start, _ = week_range(now)
+    assert prev_end == cur_start
 
 
 def test_month_range():

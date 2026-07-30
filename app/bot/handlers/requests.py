@@ -9,7 +9,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from app.bot.deps import get_deps
-from app.domain.formatting import format_sum
+from app.bot.net import send_with_retry
 from app.domain.parsing import parse_request
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,6 @@ async def handle_group_message(update: Update, context: ContextTypes.DEFAULT_TYP
         requested_by=requested_by,
         created_at=datetime.now(deps.settings.timezone),
     )
-    # chat_id ham yoziladi — GROUP_CHAT_ID ni shu log'dan olib .env ga qo'yasiz
     logger.info(
         "Yangi so'rov #%s: %s — %s (%s) | chat_id=%s",
         request_id,
@@ -52,13 +51,9 @@ async def handle_group_message(update: Update, context: ContextTypes.DEFAULT_TYP
         chat.id,
     )
 
-    await message.reply_text(
-        f"✅ So'rov qabul qilindi (#{request_id})\n"
-        f"Proyekt: {parsed.proyekt}\n"
-        f"Summa: {format_sum(parsed.summa_value)}\n"
-        f"Karta: {parsed.karta}\n\n"
-        f"To'lov amalga oshirilgach, shu xabarga javob (reply) qilib "
-        f"chekni rasm sifatida tashlang.\n"
-        f"Agar komissiya yechilgan bo'lsa, rasmning izohiga (caption) "
-        f"haqiqiy o'tkazilgan summani yozing (masalan: 606000)."
+    # Matn o'rniga reaksiya — guruh toza qoladi. To'langanda 👌 ga almashadi.
+    await send_with_retry(
+        lambda: message.set_reaction(deps.settings.reaction_received),
+        attempts=deps.settings.send_retries,
+        description=f"#{request_id} uchun reaksiya",
     )

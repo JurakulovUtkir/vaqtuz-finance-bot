@@ -11,9 +11,18 @@ from app.bot.deps import Deps
 from app.domain.reports import build_report_text
 
 
-async def compose_report(deps: Deps, title: str, start: datetime, end: datetime) -> str:
+async def compose_report(
+    deps: Deps,
+    title: str,
+    start: datetime,
+    end: datetime,
+    previous: tuple[datetime, datetime] | None = None,
+) -> str:
+    """`previous` berilsa, kanal narxlari o'sha davr bilan solishtiriladi."""
     requests = deps.db.get_between(start, end)
-    text = build_report_text(title, requests)
+    previous_requests = deps.db.get_between(*previous) if previous else None
+
+    text = build_report_text(title, requests, previous_requests)
     insight = await deps.insight.analyse(text)
     if insight:
         text += f"\n\n🤖 AI tahlili:\n{insight}"

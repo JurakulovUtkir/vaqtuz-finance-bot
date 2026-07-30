@@ -80,3 +80,37 @@ def test_invalid_timezone():
 def test_ai_enabled_when_key_present():
     settings = load_settings({**VALID, "ANTHROPIC_API_KEY": "sk-ant-test"})
     assert settings.ai_enabled is True
+
+
+def test_network_defaults_are_generous():
+    settings = load_settings(VALID)
+    assert settings.network_timeout == 30.0
+    assert settings.send_retries == 3
+
+
+def test_network_timeout_override():
+    settings = load_settings({**VALID, "NETWORK_TIMEOUT": "45"})
+    assert settings.network_timeout == 45.0
+
+
+def test_invalid_network_timeout():
+    with pytest.raises(ConfigError, match="raqam bo'lishi kerak"):
+        load_settings({**VALID, "NETWORK_TIMEOUT": "sekin"})
+
+    with pytest.raises(ConfigError, match="musbat"):
+        load_settings({**VALID, "NETWORK_TIMEOUT": "-5"})
+
+
+def test_reaction_defaults():
+    settings = load_settings(VALID)
+    assert settings.reaction_received == "👀"
+    assert settings.reaction_paid == "👌"
+
+
+def test_reaction_override():
+    settings = load_settings({**VALID, "REACTION_PAID": "💯"})
+    assert settings.reaction_paid == "💯"
+
+
+def test_default_ai_model_is_the_cheap_one():
+    assert load_settings(VALID).ai_model == "claude-haiku-4-5"
