@@ -8,7 +8,7 @@ from datetime import time as dtime
 from typing import Mapping
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-DEFAULT_AI_MODEL = "claude-haiku-4-5-20251001"
+DEFAULT_AI_MODEL = "claude-opus-5"
 DEFAULT_TIMEZONE = "Asia/Tashkent"
 DEFAULT_DB_PATH = "/data/payments.db"
 DEFAULT_LOG_LEVEL = "INFO"
@@ -19,6 +19,14 @@ DEFAULT_MONTHLY_TIME = "23:10"
 
 # python-telegram-bot v20+ da 0-6 = dushanba-yakshanba
 WEEKLY_REPORT_WEEKDAY = 6  # yakshanba
+
+# Telegram reaksiya emojilari cheklangan ro'yxatdan tanlanadi — ✅ va ⏳ mavjud emas
+DEFAULT_REACTION_RECEIVED = "👀"
+DEFAULT_REACTION_PAID = "👌"
+
+# Telegram'ga tarmoq beqaror bo'lishi mumkin — taymautlar keng olinadi
+DEFAULT_NETWORK_TIMEOUT = 30.0
+DEFAULT_SEND_RETRIES = 3
 
 
 class ConfigError(RuntimeError):
@@ -39,6 +47,10 @@ class Settings:
     daily_report_time: dtime
     weekly_report_time: dtime
     monthly_check_time: dtime
+    reaction_received: str
+    reaction_paid: str
+    network_timeout: float
+    send_retries: int
 
     @property
     def report_chat_id(self) -> int | str:
@@ -72,6 +84,19 @@ def _read_chat_id(env: Mapping[str, str], name: str) -> str | None:
             f"{name} noto'g'ri: {value!r}. Raqam bo'lishi kerak "
             f"(guruh ID'lari manfiy bo'ladi, masalan -1001234567890) yoki @username."
         ) from None
+    return value
+
+
+def _read_float(env: Mapping[str, str], name: str, default: float) -> float:
+    raw = _read(env, name)
+    if raw is None:
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        raise ConfigError(f"{name} raqam bo'lishi kerak, berilgani: {raw!r}") from None
+    if value <= 0:
+        raise ConfigError(f"{name} musbat bo'lishi kerak.")
     return value
 
 
@@ -139,4 +164,9 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         daily_report_time=_read_time(env, "DAILY_REPORT_TIME", DEFAULT_DAILY_TIME, timezone),
         weekly_report_time=_read_time(env, "WEEKLY_REPORT_TIME", DEFAULT_WEEKLY_TIME, timezone),
         monthly_check_time=_read_time(env, "MONTHLY_CHECK_TIME", DEFAULT_MONTHLY_TIME, timezone),
+        reaction_received=_read(env, "REACTION_RECEIVED", DEFAULT_REACTION_RECEIVED)
+        or DEFAULT_REACTION_RECEIVED,
+        reaction_paid=_read(env, "REACTION_PAID", DEFAULT_REACTION_PAID) or DEFAULT_REACTION_PAID,
+        network_timeout=_read_float(env, "NETWORK_TIMEOUT", DEFAULT_NETWORK_TIMEOUT),
+        send_retries=int(_read_float(env, "SEND_RETRIES", DEFAULT_SEND_RETRIES)),
     )

@@ -29,14 +29,18 @@ CREATE TABLE IF NOT EXISTS requests (
     paid_at TEXT,
     paid_photo_file_id TEXT,
     actual_summa INTEGER DEFAULT 0,
-    komissiya INTEGER DEFAULT 0
+    komissiya INTEGER DEFAULT 0,
+    ai_summa INTEGER,
+    ai_izoh TEXT
 )
 """
 
-# Eski (bitta faylli) versiyadan qolgan bazalarda bu ustunlar bo'lmasligi mumkin
+# Eski bazalarda bu ustunlar bo'lmasligi mumkin — xavfsiz qo'shamiz
 MIGRATIONS = (
     "ALTER TABLE requests ADD COLUMN actual_summa INTEGER DEFAULT 0",
     "ALTER TABLE requests ADD COLUMN komissiya INTEGER DEFAULT 0",
+    "ALTER TABLE requests ADD COLUMN ai_summa INTEGER",
+    "ALTER TABLE requests ADD COLUMN ai_izoh TEXT",
 )
 
 INDEXES = (
@@ -119,14 +123,24 @@ class Database:
             ).fetchone()
         return PaymentRequest.from_row(row) if row else None
 
+    def get_by_id(self, request_id: int) -> PaymentRequest | None:
+        with self._connect() as conn:
+            row = conn.execute("SELECT * FROM requests WHERE id = ?", (request_id,)).fetchone()
+        return PaymentRequest.from_row(row) if row else None
+
     def mark_paid(
         self,
         request_id: int,
         photo_file_id: str | None,
         actual_summa: int | None,
         paid_at: datetime,
+        ai_summa: int | None = None,
+        ai_izoh: str | None = None,
     ) -> int:
         """To'lovni tasdiqlaydi va hisoblangan komissiyani qaytaradi.
+
+        Qayta chaqirilsa oldingi chekni almashtiradi — bitta so'rovga bir necha
+        rasm tashlansa, oxirgisi kuchda qoladi.
 
         actual_summa — komissiya bilan birga haqiqiy o'tkazilgan summa.
         Berilmasa, so'ralgan summaning o'zi ishlatiladi (komissiya = 0).
@@ -145,10 +159,19 @@ class Database:
                 """
                 UPDATE requests
                 SET status = ?, paid_at = ?, paid_photo_file_id = ?,
-                    actual_summa = ?, komissiya = ?
+                    actual_summa = ?, komissiya = ?, ai_summa = ?, ai_izoh = ?
                 WHERE id = ?
                 """,
-                (STATUS_PAID, paid_at.isoformat(), photo_file_id, actual_summa, komissiya, request_id),
+                (
+                    STATUS_PAID,
+                    paid_at.isoformat(),
+                    photo_file_id,
+                    actual_summa,
+                    komissiya,
+                    ai_summa,
+                    ai_izoh,
+                    request_id,
+                ),
             )
         return komissiya
 

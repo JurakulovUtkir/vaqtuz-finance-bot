@@ -31,7 +31,7 @@ def test_handlers_registered(tmp_path):
         if isinstance(handler, CommandHandler)
         for name in handler.commands
     }
-    assert command_names == {"start", "bugun", "hafta", "oy", "kutilmoqda"}
+    assert command_names == {"start", "bugun", "hafta", "oy", "kutilmoqda", "chek"}
     assert sum(isinstance(handler, MessageHandler) for handler in handlers) == 2
     assert application.error_handlers
 
@@ -47,3 +47,12 @@ def test_deps_available_in_bot_data(tmp_path):
     deps = application.bot_data[DEPS_KEY]
     assert deps.settings.admin_id == 555000111
     assert deps.insight.enabled is False  # ANTHROPIC_API_KEY berilmagan
+    assert deps.receipt_reader.enabled is False
+
+
+def test_network_timeouts_applied(tmp_path):
+    """Standart 5 soniya beqaror tarmoqda yetmaydi — kengaytirilgani tekshiriladi."""
+    application = _build(tmp_path)
+    request = application.bot.request
+    assert request._client.timeout.connect >= 30
+    assert request._client.timeout.write >= 30

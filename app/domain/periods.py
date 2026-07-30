@@ -26,6 +26,12 @@ def week_range(now: datetime) -> tuple[datetime, datetime]:
     return start, start + timedelta(days=7)
 
 
+def previous_week_range(now: datetime) -> tuple[datetime, datetime]:
+    """O'tgan hafta — narx dinamikasini solishtirish uchun."""
+    start, end = week_range(now)
+    return start - timedelta(days=7), start
+
+
 def month_range(now: datetime) -> tuple[datetime, datetime]:
     """Joriy oy."""
     first = now.date().replace(day=1)
