@@ -25,4 +25,11 @@ volumes:
   # Zaxira nusxa olish uchun: make backup
   payments_data:
 
+networks:
+  # IPv6 majburiy: serverimizning api.telegram.org ga IPv4 yo'li deyarli
+  # ishlamaydi (10 urinishdan 1 tasi), IPv6 esa 10/10 ulanadi. IPv6siz
+  # konteyner buzuq yo'ldan ketadi va xabar yubora olmaydi.
+  default:
+    enable_ipv6: true
+
 # Bot polling orqali ishlaydi — hech qanday port ochish yoki domen kerak emas.
