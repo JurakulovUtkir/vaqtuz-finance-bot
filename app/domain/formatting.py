@@ -23,6 +23,36 @@ def format_resurs(resurs: str | None) -> str:
     return resurs.strip()
 
 
+def chunk_text(text: str, limit: int = 3900) -> list[str]:
+    """Telegram bitta xabarda 4096 belgidan ko'pini qabul qilmaydi.
+
+    Qatorlar chegarasida bo'lamiz — hisobot o'rtasidan kesilib qolmasin.
+    """
+    if len(text) <= limit:
+        return [text]
+
+    chunks: list[str] = []
+    current: list[str] = []
+    length = 0
+
+    for line in text.split("\n"):
+        while len(line) > limit:  # bitta qator ham uzun bo'lsa majburan kesamiz
+            if current:
+                chunks.append("\n".join(current))
+                current, length = [], 0
+            chunks.append(line[:limit])
+            line = line[limit:]
+        if length + len(line) + 1 > limit and current:
+            chunks.append("\n".join(current))
+            current, length = [], 0
+        current.append(line)
+        length += len(line) + 1
+
+    if current:
+        chunks.append("\n".join(current))
+    return chunks
+
+
 def format_percent(change: float) -> str:
     """0.2 -> "+20%"; -0.15 -> "-15%"."""
     percent = round(change * 100)

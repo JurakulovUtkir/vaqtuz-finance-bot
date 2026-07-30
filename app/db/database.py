@@ -183,6 +183,12 @@ class Database:
             ).fetchall()
         return [PaymentRequest.from_row(row) for row in rows]
 
+    def get_all(self) -> Sequence[PaymentRequest]:
+        """Butun tarix — Excel eksporti uchun."""
+        with self._connect() as conn:
+            rows = conn.execute("SELECT * FROM requests ORDER BY created_at").fetchall()
+        return [PaymentRequest.from_row(row) for row in rows]
+
     def get_pending(self) -> Sequence[PaymentRequest]:
         with self._connect() as conn:
             rows = conn.execute(

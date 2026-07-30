@@ -16,6 +16,7 @@ DEFAULT_LOG_LEVEL = "INFO"
 DEFAULT_DAILY_TIME = "23:00"
 DEFAULT_WEEKLY_TIME = "23:05"
 DEFAULT_MONTHLY_TIME = "23:10"
+DEFAULT_BACKUP_TIME = "02:00"
 
 # python-telegram-bot v20+ da 0-6 = dushanba-yakshanba
 WEEKLY_REPORT_WEEKDAY = 6  # yakshanba
@@ -36,7 +37,7 @@ class ConfigError(RuntimeError):
 @dataclass(frozen=True)
 class Settings:
     bot_token: str
-    admin_id: int
+    admin_ids: tuple[int, ...]
     group_chat_id: str | None
     report_chat_id_override: str | None
     anthropic_api_key: str
@@ -47,15 +48,26 @@ class Settings:
     daily_report_time: dtime
     weekly_report_time: dtime
     monthly_check_time: dtime
+    backup_time: dtime
     reaction_received: str
     reaction_paid: str
     network_timeout: float
     send_retries: int
 
     @property
-    def report_chat_id(self) -> int | str:
-        """Hisobot yuboriladigan chat. Alohida ko'rsatilmasa — adminning o'zi."""
-        return self.report_chat_id_override or self.admin_id
+    def admin_id(self) -> int:
+        """Asosiy admin — ro'yxatdagi birinchisi."""
+        return self.admin_ids[0]
+
+    def is_admin(self, user_id: int | None) -> bool:
+        return user_id is not None and user_id in self.admin_ids
+
+    @property
+    def report_chat_ids(self) -> tuple[int | str, ...]:
+        """Hisobot qayerga ketadi. REPORT_CHAT_ID berilmasa — barcha adminlarga."""
+        if self.report_chat_id_override:
+            return (self.report_chat_id_override,)
+        return self.admin_ids
 
     @property
     def ai_enabled(self) -> bool:
@@ -130,17 +142,33 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
             "TELEGRAM_BOT_TOKEN noto'g'ri ko'rinishda — token `123456789:AA...` shaklida bo'ladi."
         )
 
-    admin_raw = _read(env, "ADMIN_ID")
+    # ADMIN_IDS — vergul bilan bir nechta. ADMIN_ID eski nom sifatida ishlayveradi.
+    admin_raw = _read(env, "ADMIN_IDS") or _read(env, "ADMIN_ID")
     if not admin_raw:
         raise ConfigError(
-            "ADMIN_ID sozlanmagan. Telegram'da @userinfobot ga yozib o'z ID'ingizni oling."
+            "ADMIN_IDS sozlanmagan. Telegram'da @userinfobot ga yozib ID oling. "
+            "Bir nechta admin uchun vergul bilan yozing: ADMIN_IDS=111,222"
         )
-    try:
-        admin_id = int(admin_raw)
-    except ValueError:
-        raise ConfigError(f"ADMIN_ID raqam bo'lishi kerak, berilgani: {admin_raw!r}") from None
-    if admin_id <= 0:
-        raise ConfigError("ADMIN_ID musbat raqam bo'lishi kerak.")
+
+    admin_ids: list[int] = []
+    for part in admin_raw.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            value = int(part)
+        except ValueError:
+            raise ConfigError(
+                f"ADMIN_IDS ichida raqam bo'lmagan qiymat: {part!r}. "
+                f"To'g'ri ko'rinish: ADMIN_IDS=279025908,1411561011"
+            ) from None
+        if value <= 0:
+            raise ConfigError(f"Admin ID musbat raqam bo'lishi kerak, berilgani: {value}")
+        if value not in admin_ids:  # takrorlanishi zarar qilmaydi, lekin tozalaymiz
+            admin_ids.append(value)
+
+    if not admin_ids:
+        raise ConfigError("ADMIN_IDS bo'sh. Kamida bitta admin ID kerak.")
 
     tz_name = _read(env, "TZ", DEFAULT_TIMEZONE) or DEFAULT_TIMEZONE
     try:
@@ -153,7 +181,7 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
 
     return Settings(
         bot_token=bot_token,
-        admin_id=admin_id,
+        admin_ids=tuple(admin_ids),
         group_chat_id=_read_chat_id(env, "GROUP_CHAT_ID"),
         report_chat_id_override=_read_chat_id(env, "REPORT_CHAT_ID"),
         anthropic_api_key=_read(env, "ANTHROPIC_API_KEY") or "",
@@ -164,6 +192,7 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         daily_report_time=_read_time(env, "DAILY_REPORT_TIME", DEFAULT_DAILY_TIME, timezone),
         weekly_report_time=_read_time(env, "WEEKLY_REPORT_TIME", DEFAULT_WEEKLY_TIME, timezone),
         monthly_check_time=_read_time(env, "MONTHLY_CHECK_TIME", DEFAULT_MONTHLY_TIME, timezone),
+        backup_time=_read_time(env, "BACKUP_TIME", DEFAULT_BACKUP_TIME, timezone),
         reaction_received=_read(env, "REACTION_RECEIVED", DEFAULT_REACTION_RECEIVED)
         or DEFAULT_REACTION_RECEIVED,
         reaction_paid=_read(env, "REACTION_PAID", DEFAULT_REACTION_PAID) or DEFAULT_REACTION_PAID,

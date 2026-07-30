@@ -1,6 +1,6 @@
 """Application to'g'ri yig'ilishini tekshiruvchi smoke-test (tarmoqqa chiqmaydi)."""
 
-from telegram.ext import CommandHandler, MessageHandler
+from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
 
 from app.bot.application import build_application
 from app.bot.deps import DEPS_KEY
@@ -31,15 +31,16 @@ def test_handlers_registered(tmp_path):
         if isinstance(handler, CommandHandler)
         for name in handler.commands
     }
-    assert command_names == {"start", "bugun", "hafta", "oy", "kutilmoqda", "chek"}
+    assert command_names == {"start", "menu", "bugun", "hafta", "oy", "kutilmoqda", "chek"}
     assert sum(isinstance(handler, MessageHandler) for handler in handlers) == 2
+    assert sum(isinstance(handler, CallbackQueryHandler) for handler in handlers) == 1
     assert application.error_handlers
 
 
 def test_jobs_registered(tmp_path):
     application = _build(tmp_path)
     job_names = {job.name for job in application.job_queue.jobs()}
-    assert job_names == {"daily_report", "weekly_report", "monthly_report_check"}
+    assert job_names == {"daily_report", "weekly_report", "monthly_report_check", "backup"}
 
 
 def test_deps_available_in_bot_data(tmp_path):
