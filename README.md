@@ -51,9 +51,10 @@ ruxsat bermaydi.
 | O'zgaruvchi | Majburiy | Sukut | Izoh |
 |---|---|---|---|
 | `TELEGRAM_BOT_TOKEN` | ha | — | @BotFather'dan |
-| `ADMIN_ID` | ha | — | @userinfobot'dan. Faqat shu odam chek tashlab to'lovni tasdiqlay oladi |
+| `ADMIN_IDS` | ha | — | Vergul bilan bir nechta: `279025908,1411561011`. Eski `ADMIN_ID` ham ishlaydi |
 | `GROUP_CHAT_ID` | yo'q | — | So'rovlar keladigan guruh (manfiy raqam). Bo'sh bo'lsa — har qanday guruh |
-| `REPORT_CHAT_ID` | yo'q | `ADMIN_ID` | Hisobotlar yuboriladigan chat |
+| `REPORT_CHAT_ID` | yo'q | barcha adminlar | Hisobotlar yuboriladigan chat |
+| `BACKUP_TIME` | yo'q | `02:00` | Zaxira adminlarga yuboriladigan vaqt |
 | `ANTHROPIC_API_KEY` | yo'q | — | Bo'sh bo'lsa AI tahlil ham, chekni avtomatik o'qish ham o'chiq |
 | `AI_MODEL` | yo'q | `claude-haiku-4-5` | Aniqroq kerak bo'lsa: `claude-sonnet-5`, `claude-opus-5` |
 | `TZ` | yo'q | `Asia/Tashkent` | |
@@ -106,8 +107,46 @@ komissiya deb hisoblanadi.
 
 Bitta so'rovga bir nechta chek tashlansa — **oxirgisi** kuchda qoladi.
 
-**Buyruqlar** (faqat `ADMIN_ID` uchun): `/bugun`, `/hafta`, `/oy`,
+## Admin menyusi
+
+Admin botga shaxsiy `/start` (yoki `/menu`) yozsa tugmali menyu chiqadi —
+buyruqlarni eslab qolish shart emas:
+
+```
+[📅 Bugun]  [🗓 Hafta]  [📆 Oy]
+[⏳ Kutilayotgan to'lovlar]
+— Excel yuklab olish —
+[📥 Joriy oy]  [📥 O'tgan oy]
+[📥 Butun tarix]
+```
+
+Excel faylida 7 ta varaq bor. Eng muhimi — **Kanal narxlari**: qatorlar kanallar,
+ustunlar oylar, katakda o'sha oydagi o'rtacha post narxi, oxirgi ustunda umumiy
+o'zgarish foizda. Shu jadval "bu kanalga avval qancha to'lardik, hozir qancha"
+degan savolga bir qarashda javob beradi.
+
+Qolgan varaqlar: `Umumiy`, `Kanallar`, `Oylar`, `Haftalar`, `Mijozlar`,
+`Barcha so'rovlar`.
+
+**Buyruqlar** (faqat adminlar uchun): `/menu`, `/bugun`, `/hafta`, `/oy`,
 `/kutilmoqda`, `/chek 14`
+
+## Zaxira nusxa
+
+Ikki qatlam:
+
+1. **Serverda** — har kuni 03:00 da `backups/` ga, 14 kun saqlanadi (cron)
+2. **Adminlarga** — har kuni `BACKUP_TIME` (sukut 02:00) da `.tar.gz` bo'lib
+   Telegram orqali yuboriladi
+
+Ikkinchisi muhim: server yo'qolsa birinchi qatlam ham u bilan yo'qoladi.
+Telegram'dagi nusxa esa serverdan tashqarida turadi.
+
+Tiklash: arxivni yechib, ichidagi `payments.db` ni serverga qo'ying —
+
+```bash
+make restore FILE=backups/payments-20260731-0200.db
+```
 
 ---
 

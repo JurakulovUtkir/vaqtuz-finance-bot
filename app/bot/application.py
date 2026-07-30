@@ -5,12 +5,19 @@ from __future__ import annotations
 import logging
 
 from telegram import BotCommand
-from telegram.ext import Application, ApplicationBuilder, CommandHandler, MessageHandler, filters
+from telegram.ext import (
+    Application,
+    ApplicationBuilder,
+    CallbackQueryHandler,
+    CommandHandler,
+    MessageHandler,
+    filters,
+)
 
 from app.ai.insight import InsightProvider
 from app.ai.vision import ReceiptReader
 from app.bot.deps import DEPS_KEY, Deps
-from app.bot.handlers import commands, errors, receipts, requests
+from app.bot.handlers import commands, errors, menu, receipts, requests
 from app.bot.jobs import register_jobs
 from app.config import Settings
 from app.db.database import Database
@@ -52,6 +59,8 @@ def build_application(settings: Settings, db: Database) -> Application:
     )
 
     application.add_handler(CommandHandler("start", commands.cmd_start))
+    application.add_handler(CommandHandler("menu", commands.cmd_menu))
+    application.add_handler(CallbackQueryHandler(menu.handle_callback))
     application.add_handler(CommandHandler("bugun", commands.cmd_today))
     application.add_handler(CommandHandler("hafta", commands.cmd_week))
     application.add_handler(CommandHandler("oy", commands.cmd_month))

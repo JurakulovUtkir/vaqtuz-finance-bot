@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 from dataclasses import dataclass
+from datetime import datetime
 
 STATUS_PENDING = "kutilmoqda"
 STATUS_PAID = "tolandi"
@@ -59,3 +60,11 @@ class PaymentRequest:
     def effective_paid(self) -> int:
         """Haqiqiy o'tkazilgan summa; belgilanmagan bo'lsa — so'ralgani."""
         return self.actual_summa or self.summa_value
+
+    @property
+    def created(self) -> datetime | None:
+        """created_at ni datetime sifatida. Buzuq qiymatda None."""
+        try:
+            return datetime.fromisoformat(self.created_at)
+        except (TypeError, ValueError):
+            return None

@@ -37,8 +37,8 @@ async def handle_admin_photo(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if message is None:
         return
 
-    if user is None or user.id != deps.settings.admin_id:
-        return  # faqat admin to'lovni tasdiqlay oladi
+    if not deps.settings.is_admin(user.id if user else None):
+        return  # faqat adminlar to'lovni tasdiqlay oladi
 
     replied = message.reply_to_message
     if replied is None:

@@ -11,6 +11,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from app.bot.deps import get_deps
+from app.bot.handlers.menu import show_menu
 from app.bot.net import send_with_retry
 from app.bot.reporting import compose_report, daily_title, monthly_title, weekly_title
 from app.domain.formatting import format_resurs, format_sum
@@ -38,6 +39,7 @@ START_TEXT = (
 DENIED_TEXT = "⛔️ Bu buyruq faqat admin uchun."
 
 COMMANDS = (
+    ("menu", "Tugmali menyu"),
     ("bugun", "Bugungi hisobot"),
     ("hafta", "Shu haftalik hisobot"),
     ("oy", "Shu oylik hisobot"),
@@ -64,7 +66,7 @@ def admin_only(handler: Handler) -> Handler:
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         deps = get_deps(context)
         user = update.effective_user
-        if user is None or user.id != deps.settings.admin_id:
+        if not deps.settings.is_admin(user.id if user else None):
             logger.info(
                 "Ruxsatsiz buyruq: %s (id=%s)",
                 user.full_name if user else "noma'lum",
@@ -78,7 +80,18 @@ def admin_only(handler: Handler) -> Handler:
 
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Admin bo'lsa tugmali menyu, aks holda qisqa tanishtiruv."""
+    deps = get_deps(context)
+    user = update.effective_user
+    if deps.settings.is_admin(user.id if user else None):
+        await show_menu(update, context)
+        return
     await _reply(update, context, START_TEXT)
+
+
+@admin_only
+async def cmd_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await show_menu(update, context)
 
 
 @admin_only

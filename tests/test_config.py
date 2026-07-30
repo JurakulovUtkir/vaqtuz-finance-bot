@@ -33,8 +33,45 @@ def test_missing_admin_id():
 
 
 def test_non_numeric_admin_id():
-    with pytest.raises(ConfigError, match="raqam bo'lishi kerak"):
+    with pytest.raises(ConfigError, match="raqam bo'lmagan qiymat"):
         load_settings({**VALID, "ADMIN_ID": "menman"})
+
+
+def test_multiple_admins_from_admin_ids():
+    settings = load_settings({**VALID, "ADMIN_IDS": "279025908,1411561011"})
+    assert settings.admin_ids == (279025908, 1411561011)
+    assert settings.admin_id == 279025908  # birinchisi asosiy
+    assert settings.is_admin(1411561011) is True
+    assert settings.is_admin(999) is False
+    assert settings.is_admin(None) is False
+
+
+def test_admin_ids_tolerates_spaces_and_duplicates():
+    settings = load_settings({**VALID, "ADMIN_IDS": " 111 , 222 , 111 "})
+    assert settings.admin_ids == (111, 222)
+
+
+def test_admin_ids_takes_priority_over_legacy_admin_id():
+    settings = load_settings({**VALID, "ADMIN_ID": "999", "ADMIN_IDS": "111,222"})
+    assert settings.admin_ids == (111, 222)
+
+
+def test_legacy_admin_id_still_works():
+    assert load_settings(VALID).admin_ids == (555000111,)
+
+
+def test_negative_admin_id_rejected():
+    with pytest.raises(ConfigError, match="musbat"):
+        load_settings({**VALID, "ADMIN_IDS": "111,-5"})
+
+
+def test_backup_time_default_is_two_am():
+    assert load_settings(VALID).backup_time.strftime("%H:%M") == "02:00"
+
+
+def test_backup_time_override():
+    settings = load_settings({**VALID, "BACKUP_TIME": "04:30"})
+    assert settings.backup_time.strftime("%H:%M") == "04:30"
 
 
 def test_blank_values_treated_as_unset():
@@ -53,13 +90,14 @@ def test_invalid_group_chat_id():
         load_settings({**VALID, "GROUP_CHAT_ID": "guruhim"})
 
 
-def test_report_chat_defaults_to_admin():
-    assert load_settings(VALID).report_chat_id == 555000111
+def test_reports_go_to_all_admins_by_default():
+    settings = load_settings({**VALID, "ADMIN_IDS": "111,222"})
+    assert settings.report_chat_ids == (111, 222)
 
 
-def test_report_chat_override():
-    settings = load_settings({**VALID, "REPORT_CHAT_ID": "-100999"})
-    assert settings.report_chat_id == "-100999"
+def test_report_chat_override_wins():
+    settings = load_settings({**VALID, "ADMIN_IDS": "111,222", "REPORT_CHAT_ID": "-100999"})
+    assert settings.report_chat_ids == ("-100999",)
 
 
 def test_custom_report_time():
