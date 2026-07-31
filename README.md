@@ -51,7 +51,7 @@ ruxsat bermaydi.
 | O'zgaruvchi | Majburiy | Sukut | Izoh |
 |---|---|---|---|
 | `TELEGRAM_BOT_TOKEN` | ha | — | @BotFather'dan |
-| `ADMIN_IDS` | ha | — | Vergul bilan bir nechta: `279025908,1411561011`. Eski `ADMIN_ID` ham ishlaydi |
+| `ADMIN_IDS` | ha | — | Hisobot va menyu uchun. Vergul bilan bir nechta: `279025908,1411561011`. Eski `ADMIN_ID` ham ishlaydi. Chek tashlashga aloqasi yo'q |
 | `GROUP_CHAT_ID` | yo'q | — | So'rovlar keladigan guruh (manfiy raqam). Bo'sh bo'lsa — har qanday guruh |
 | `REPORT_CHAT_ID` | yo'q | barcha adminlar | Hisobotlar yuboriladigan chat |
 | `BACKUP_TIME` | yo'q | `02:00` | Zaxira adminlarga yuboriladigan vaqt |
@@ -90,9 +90,12 @@ mumkin. To'rttala maydon topilmasa bot xabarni e'tiborsiz qoldiradi.
 So'rovni ko'rgach bot xabarga **👀** reaksiyasini qo'yadi — guruhni matn bilan
 to'ldirmaslik uchun javob yozmaydi.
 
-**To'lovni tasdiqlash** (faqat admin): **original so'rov xabariga** reply qilib
-chek rasmini yuboring (botning javobiga emas). Bot reaksiyani **👌** ga
-almashtiradi va qisqa tasdiq yozadi.
+**To'lovni tasdiqlash** — guruhdagi **istalgan odam** qila oladi: **original
+so'rov xabariga** reply qilib chek rasmini yuboring. Bot reaksiyani **👌** ga
+almashtiradi, qisqa tasdiq yozadi va **kim tasdiqlaganini** bazaga yozib qo'yadi.
+
+`ADMIN_IDS` chekka aloqador emas — u faqat hisobot olish va shaxsiy chatdagi
+menyu uchun kerak.
 
 **Summa qayerdan olinadi** (shu tartibda):
 

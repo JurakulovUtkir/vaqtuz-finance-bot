@@ -16,6 +16,7 @@ def make_request(
     komissiya: int = 0,
     created_at: str = "2026-07-28T10:00:00+05:00",
     paid_photo_file_id: str | None = None,
+    paid_by: str | None = None,
 ) -> PaymentRequest:
     return PaymentRequest(
         id=request_id,
@@ -35,4 +36,6 @@ def make_request(
         komissiya=komissiya,
         ai_summa=None,
         ai_izoh=None,
+        paid_by=paid_by,
+        paid_by_id=None,
     )
