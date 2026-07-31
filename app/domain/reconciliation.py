@@ -48,31 +48,37 @@ def build_confirmation_text(
     source: Source,
     ai_note: str | None = None,
     was_paid: bool = False,
+    paid_by: str | None = None,
 ) -> str:
-    """Admin chek tashlaganda yuboriladigan qisqa tasdiq matni."""
+    """Chek tashlanganda yuboriladigan qisqa tasdiq matni."""
     header = f"♻️ #{request_id} cheki yangilandi" if was_paid else f"👌 #{request_id} to'landi"
-    lines = [f"{header} — {proyekt}"]
+    lines = [f"{header} — {proyekt}", f"So'ralgan: {format_sum(requested)}"]
 
     match = classify(requested, actual)
-    if match is Match.EXACT and source is Source.NONE:
-        lines[0] += f" — {format_sum(requested)}"
-        lines.append("ℹ️ Chekdan summa o'qilmadi — so'ralgan summa yozildi.")
-        lines.append("Aniq summani rasm izohiga yozib qayta tashlashingiz mumkin.")
-        return "\n".join(lines)
 
-    lines.append(f"So'ralgan: {format_sum(requested)}")
-
-    read_from = "izohdan" if source is Source.CAPTION else "chekdan o'qildi"
-    detail = f"Chekda: {format_sum(actual)} ({read_from}"
-    if source is Source.AI and ai_note:
-        detail += f", {ai_note}"
-    lines.append(detail + ")")
-
-    if match is Match.COMMISSION:
-        lines.append(f"💸 Komissiya: {format_sum(komissiya)}")
-    elif match is Match.MISMATCH:
+    if source is Source.NONE:
         lines.append("")
-        lines.append("⚠️ Summalar mos kelmayapti — tekshiring!")
-        lines.append(f"Farq: {format_sum(abs(komissiya))} {'ortiqcha' if komissiya > 0 else 'kam'}")
+        lines.append("ℹ️ Summa chekdan o'qilmadi — so'ralgan summa yozildi.")
+        lines.append("Boshqacha bo'lsa: chekni qayta tashlang va rasm izohiga")
+        lines.append("aniq summani yozing (masalan: 505000).")
+    else:
+        read_from = "izohdan" if source is Source.CAPTION else "chekdan o'qildi"
+        detail = f"Chekda: {format_sum(actual)} ({read_from}"
+        if source is Source.AI and ai_note:
+            detail += f", {ai_note}"
+        lines.append(detail + ")")
+
+        if match is Match.COMMISSION:
+            lines.append(f"💸 Komissiya: {format_sum(komissiya)}")
+        elif match is Match.MISMATCH:
+            lines.append("")
+            lines.append("⚠️ Summalar mos kelmayapti — tekshiring!")
+            lines.append(
+                f"Farq: {format_sum(abs(komissiya))} {'ortiqcha' if komissiya > 0 else 'kam'}"
+            )
+
+    if paid_by:
+        lines.append("")
+        lines.append(f"Tasdiqladi: {paid_by}")
 
     return "\n".join(lines)

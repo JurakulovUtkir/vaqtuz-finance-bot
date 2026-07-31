@@ -98,3 +98,11 @@ def test_raw_sheet_marks_status():
     sheet = _book(rows)["Barcha so'rovlar"]
     assert sheet.cell(row=2, column=6).value == "to'landi"
     assert sheet.cell(row=3, column=6).value == "kutilmoqda"
+
+
+def test_raw_sheet_shows_who_confirmed():
+    rows = [make_request(1, status=STATUS_PAID, actual=60000, paid_by="Dilmurod")]
+    sheet = _book(rows)["Barcha so'rovlar"]
+    headers = [c.value for c in sheet[1]]
+    assert "Kim tasdiqladi" in headers
+    assert sheet.cell(row=2, column=headers.index("Kim tasdiqladi") + 1).value == "Dilmurod"

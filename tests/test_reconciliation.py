@@ -19,7 +19,8 @@ def test_shortfall_is_always_mismatch():
     assert classify(60000, 59999) is Match.MISMATCH
 
 
-def test_confirmation_exact_without_source():
+def test_confirmation_without_source_explains_next_step():
+    """AI o'chiq bo'lsa admin nima qilishini aniq bilishi kerak."""
     text = build_confirmation_text(
         request_id=5,
         proyekt="Garant Bank",
@@ -28,8 +29,35 @@ def test_confirmation_exact_without_source():
         komissiya=0,
         source=Source.NONE,
     )
-    assert "👌 #5 to'landi — Garant Bank — 60 000 so'm" in text
-    assert "Chekdan summa o'qilmadi" in text
+    assert "👌 #5 to'landi — Garant Bank" in text
+    assert "So'ralgan: 60 000 so'm" in text
+    assert "Summa chekdan o'qilmadi" in text
+    assert "rasm izohiga" in text
+
+
+def test_confirmation_names_who_confirmed():
+    text = build_confirmation_text(
+        request_id=5,
+        proyekt="Garant Bank",
+        requested=60000,
+        actual=60000,
+        komissiya=0,
+        source=Source.CAPTION,
+        paid_by="Dilmurod",
+    )
+    assert "Tasdiqladi: Dilmurod" in text
+
+
+def test_confirmation_without_name_has_no_empty_line():
+    text = build_confirmation_text(
+        request_id=5,
+        proyekt="X",
+        requested=1000,
+        actual=1000,
+        komissiya=0,
+        source=Source.CAPTION,
+    )
+    assert "Tasdiqladi" not in text
 
 
 def test_confirmation_with_commission():

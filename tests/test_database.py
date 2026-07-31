@@ -115,6 +115,26 @@ def test_ai_fields_are_stored(db):
     assert found.ai_izoh == "ishonch: yuqori"
 
 
+def test_records_who_confirmed(db):
+    """Chekni har kim tashlashi mumkin — kim tasdiqlagani yozilishi shart."""
+    request_id = _add(db)
+    db.mark_paid(
+        request_id, "photo", None, datetime.now(TZ), paid_by="Dilmurod", paid_by_id=12345
+    )
+    found = db.get_by_id(request_id)
+    assert found.paid_by == "Dilmurod"
+    assert found.paid_by_id == 12345
+
+
+def test_second_receipt_overwrites_who_confirmed(db):
+    request_id = _add(db)
+    db.mark_paid(request_id, "a", None, datetime.now(TZ), paid_by="Birinchi", paid_by_id=1)
+    db.mark_paid(request_id, "b", None, datetime.now(TZ), paid_by="Ikkinchi", paid_by_id=2)
+    found = db.get_by_id(request_id)
+    assert found.paid_by == "Ikkinchi"
+    assert found.paid_by_id == 2
+
+
 def test_ai_fields_default_to_none(db):
     request_id = _add(db)
     db.mark_paid(request_id, "photo", None, datetime.now(TZ))

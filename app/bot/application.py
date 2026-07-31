@@ -73,7 +73,7 @@ def build_application(settings: Settings, db: Database) -> Application:
             requests.handle_group_message,
         )
     )
-    application.add_handler(MessageHandler(filters.PHOTO, receipts.handle_admin_photo))
+    application.add_handler(MessageHandler(filters.PHOTO, receipts.handle_receipt_photo))
 
     application.add_error_handler(errors.handle_error)
 

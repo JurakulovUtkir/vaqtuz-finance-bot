@@ -138,7 +138,8 @@ def _sheet_raw(book: Workbook, requests: Sequence[PaymentRequest]) -> None:
         sheet,
         [
             "#", "Sana", "Kanal", "Mijoz", "So'ralgan", "Holat",
-            "O'tkazilgan", "Komissiya", "Karta", "Kim so'radi", "To'langan sana",
+            "O'tkazilgan", "Komissiya", "Karta", "Kim so'radi",
+            "Kim tasdiqladi", "To'langan sana",
         ],
     )
     for row_index, request in enumerate(requests, start=2):
@@ -153,7 +154,8 @@ def _sheet_raw(book: Workbook, requests: Sequence[PaymentRequest]) -> None:
         sheet.cell(row=row_index, column=8, value=request.komissiya or None)
         sheet.cell(row=row_index, column=9, value=request.karta)
         sheet.cell(row=row_index, column=10, value=request.requested_by)
-        sheet.cell(row=row_index, column=11, value=(request.paid_at or "")[:16].replace("T", " "))
+        sheet.cell(row=row_index, column=11, value=request.paid_by)
+        sheet.cell(row=row_index, column=12, value=(request.paid_at or "")[:16].replace("T", " "))
     _money_column(sheet, (5, 7, 8))
     _autosize(sheet)
 

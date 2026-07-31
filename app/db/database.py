@@ -31,7 +31,9 @@ CREATE TABLE IF NOT EXISTS requests (
     actual_summa INTEGER DEFAULT 0,
     komissiya INTEGER DEFAULT 0,
     ai_summa INTEGER,
-    ai_izoh TEXT
+    ai_izoh TEXT,
+    paid_by TEXT,
+    paid_by_id INTEGER
 )
 """
 
@@ -41,6 +43,8 @@ MIGRATIONS = (
     "ALTER TABLE requests ADD COLUMN komissiya INTEGER DEFAULT 0",
     "ALTER TABLE requests ADD COLUMN ai_summa INTEGER",
     "ALTER TABLE requests ADD COLUMN ai_izoh TEXT",
+    "ALTER TABLE requests ADD COLUMN paid_by TEXT",
+    "ALTER TABLE requests ADD COLUMN paid_by_id INTEGER",
 )
 
 INDEXES = (
@@ -136,6 +140,8 @@ class Database:
         paid_at: datetime,
         ai_summa: int | None = None,
         ai_izoh: str | None = None,
+        paid_by: str | None = None,
+        paid_by_id: int | None = None,
     ) -> int:
         """To'lovni tasdiqlaydi va hisoblangan komissiyani qaytaradi.
 
@@ -159,7 +165,8 @@ class Database:
                 """
                 UPDATE requests
                 SET status = ?, paid_at = ?, paid_photo_file_id = ?,
-                    actual_summa = ?, komissiya = ?, ai_summa = ?, ai_izoh = ?
+                    actual_summa = ?, komissiya = ?, ai_summa = ?, ai_izoh = ?,
+                    paid_by = ?, paid_by_id = ?
                 WHERE id = ?
                 """,
                 (
@@ -170,6 +177,8 @@ class Database:
                     komissiya,
                     ai_summa,
                     ai_izoh,
+                    paid_by,
+                    paid_by_id,
                     request_id,
                 ),
             )

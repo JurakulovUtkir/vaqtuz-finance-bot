@@ -1,4 +1,11 @@
-"""Admin chek (rasm) tashlaganda to'lovni tasdiqlash."""
+"""Chek (rasm) tashlanganda to'lovni tasdiqlash.
+
+Chekni guruhdagi ISTALGAN odam tashlashi mumkin — to'lovni ko'pincha
+buxgalter yoki so'rovni yozgan xodimning o'zi amalga oshiradi. ADMIN_IDS
+faqat hisobot olish va shaxsiy chatdagi menyu uchun kerak.
+
+Kim tasdiqlagani bazaga yozib boriladi — pul bilan ishlaganda bu majburiy.
+"""
 
 from __future__ import annotations
 
@@ -30,15 +37,15 @@ async def _read_receipt(deps: Deps, message: Message) -> ReceiptData | None:
     return await deps.receipt_reader.read(image_bytes)
 
 
-async def handle_admin_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def handle_receipt_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     deps = get_deps(context)
     message = update.effective_message
     user = update.effective_user
     if message is None:
         return
 
-    if not deps.settings.is_admin(user.id if user else None):
-        return  # faqat adminlar to'lovni tasdiqlay oladi
+    if deps.settings.group_chat_id and str(message.chat_id) != deps.settings.group_chat_id:
+        return  # faqat belgilangan guruhdagi cheklarni qabul qilamiz
 
     replied = message.reply_to_message
     if replied is None:
@@ -60,14 +67,16 @@ async def handle_admin_photo(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     was_paid = request.is_paid  # qayta tashlansa oldingi chek almashtiriladi
     photo_file_id = message.photo[-1].file_id if message.photo else None
+    paid_by = user.full_name if user else None
+    paid_by_id = user.id if user else None
 
-    # 1) Rasm izohidagi raqam — adminning qo'lda kiritgani, eng yuqori ustuvorlik
+    # 1) Rasm izohidagi raqam — qo'lda kiritilgani, eng yuqori ustuvorlik
     actual_summa = parse_amount(message.caption)
     source = Source.CAPTION if actual_summa is not None else Source.NONE
     ai_summa: int | None = None
     ai_note: str | None = None
 
-    # 2) Izoh bo'lmasa — chekni AI o'qiydi
+    # 2) Izoh bo'lmasa — chekni AI o'qiydi (kalit bo'lsa va ruxsat bo'lsa)
     if actual_summa is None:
         receipt = await _read_receipt(deps, message)
         if receipt is not None:
@@ -86,10 +95,13 @@ async def handle_admin_photo(update: Update, context: ContextTypes.DEFAULT_TYPE)
         paid_at=datetime.now(deps.settings.timezone),
         ai_summa=ai_summa,
         ai_izoh=ai_note,
+        paid_by=paid_by,
+        paid_by_id=paid_by_id,
     )
     logger.info(
-        "So'rov #%s to'landi (manba: %s, komissiya: %s, qayta: %s)",
+        "So'rov #%s to'landi (tasdiqladi: %s, manba: %s, komissiya: %s, qayta: %s)",
         request.id,
+        paid_by,
         source.value,
         komissiya,
         was_paid,
@@ -111,6 +123,7 @@ async def handle_admin_photo(update: Update, context: ContextTypes.DEFAULT_TYPE)
         source=source,
         ai_note=ai_note,
         was_paid=was_paid,
+        paid_by=paid_by,
     )
     await send_with_retry(
         lambda: message.reply_text(text),
