@@ -17,7 +17,7 @@ from telegram.ext import (
 from app.ai.insight import InsightProvider
 from app.ai.vision import ReceiptReader
 from app.bot.deps import DEPS_KEY, Deps
-from app.bot.handlers import commands, errors, menu, receipts, requests, restore
+from app.bot.handlers import commands, errors, menu, receipts, requests
 from app.bot.jobs import register_jobs
 from app.config import Settings
 from app.db.database import Database
@@ -66,7 +66,7 @@ def build_application(settings: Settings, db: Database) -> Application:
     application.add_handler(CommandHandler("oy", commands.cmd_month))
     application.add_handler(CommandHandler("kutilmoqda", commands.cmd_pending))
     application.add_handler(CommandHandler("chek", commands.cmd_receipt))
-    application.add_handler(CommandHandler("bekor", restore.cmd_cancel))
+    # application.add_handler(CommandHandler("bekor", restore.cmd_cancel))
 
     application.add_handler(
         MessageHandler(
@@ -75,12 +75,15 @@ def build_application(settings: Settings, db: Database) -> Application:
         )
     )
     application.add_handler(MessageHandler(filters.PHOTO, receipts.handle_receipt_photo))
-    # Zaxiradan tiklash — faqat shaxsiy chatdagi hujjatlar
-    application.add_handler(
-        MessageHandler(
-            filters.Document.ALL & filters.ChatType.PRIVATE, restore.handle_document
-        )
-    )
+
+    # --- Zaxiradan tiklash: server ko'chirish uchun edi, hozir o'chirilgan ---
+    # Kodi app/restore.py va handlers/restore.py da turibdi, testlari ham bor.
+    # Qayta yoqish uchun shu ikki qatorni va menu.py dagi tugmani oching.
+    # application.add_handler(
+    #     MessageHandler(
+    #         filters.Document.ALL & filters.ChatType.PRIVATE, restore.handle_document
+    #     )
+    # )
 
     application.add_error_handler(errors.handle_error)
 

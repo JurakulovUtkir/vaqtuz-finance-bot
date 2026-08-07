@@ -31,11 +31,9 @@ def test_handlers_registered(tmp_path):
         if isinstance(handler, CommandHandler)
         for name in handler.commands
     }
-    assert command_names == {
-        "start", "menu", "bugun", "hafta", "oy", "kutilmoqda", "chek", "bekor",
-    }
-    # matn (guruh), rasm (chek), hujjat (tiklash)
-    assert sum(isinstance(handler, MessageHandler) for handler in handlers) == 3
+    assert command_names == {"start", "menu", "bugun", "hafta", "oy", "kutilmoqda", "chek"}
+    # matn (guruh) va rasm (chek). Hujjat handleri — tiklash bilan birga o'chirilgan.
+    assert sum(isinstance(handler, MessageHandler) for handler in handlers) == 2
     assert sum(isinstance(handler, CallbackQueryHandler) for handler in handlers) == 1
     assert application.error_handlers
 

@@ -17,8 +17,12 @@ def test_menu_has_every_action():
         "xls:prev",
         "xls:all",
         "bak:now",
-        "bak:restore",
     }
+
+
+def test_restore_button_is_disabled():
+    """Ko'chirish tugagach o'chirilgan — kodi turibdi, tugmasi yo'q."""
+    assert "bak:restore" not in _callbacks(build_menu())
 
 
 def test_menu_buttons_are_labelled_in_uzbek():
