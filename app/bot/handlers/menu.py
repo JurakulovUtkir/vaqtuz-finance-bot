@@ -14,6 +14,7 @@ from telegram.ext import ContextTypes
 
 from app.backup import build_caption, create_archive
 from app.bot.deps import Deps, get_deps
+from app.bot.handlers.restore import AWAITING_KEY, PROMPT_TEXT
 from app.bot.net import send_with_retry
 from app.bot.reporting import compose_report, daily_title, monthly_title, weekly_title
 from app.domain.formatting import chunk_text
@@ -52,6 +53,8 @@ def build_menu() -> InlineKeyboardMarkup:
             ],
             [InlineKeyboardButton("📥 Butun tarix", callback_data="xls:all")],
             [InlineKeyboardButton("💾 Hozir zaxira olish", callback_data="bak:now")],
+            # Vaqtinchalik — serverga ko'chirish tugagach olib tashlanadi
+            [InlineKeyboardButton("♻️ Zaxiradan tiklash", callback_data="bak:restore")],
         ]
     )
 
@@ -197,6 +200,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             await _handle_report(query, deps, action)
         elif kind == "xls":
             await _handle_excel(query, deps, action)
+        elif kind == "bak" and action == "restore":
+            if context.user_data is not None:
+                context.user_data[AWAITING_KEY] = True
+            await _send_text(query, deps, PROMPT_TEXT)
         elif kind == "bak":
             await _handle_backup(query, deps)
     except Exception:

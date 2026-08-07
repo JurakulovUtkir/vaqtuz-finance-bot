@@ -17,6 +17,7 @@ def test_menu_has_every_action():
         "xls:prev",
         "xls:all",
         "bak:now",
+        "bak:restore",
     }
 
 
