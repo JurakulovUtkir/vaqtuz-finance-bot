@@ -4,8 +4,12 @@ services:
     image: vaqtuz-finance-bot:latest
     container_name: vaqtuz-finance-bot
     restart: unless-stopped
+    # Dokploy sozlamalarni o'z panelidan konteynerga uzatadi va .env fayli
+    # bo'lmasligi mumkin — shuning uchun majburiy emas. Qo'lda deployda
+    # (docker compose up) .env fayli o'qiladi.
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       # Baza konteyner ichida doim shu yerda — payments_data volume'ida saqlanadi
       DB_PATH: /data/payments.db
