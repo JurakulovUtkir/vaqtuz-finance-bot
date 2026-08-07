@@ -1,5 +1,7 @@
-# Maxfiy sozlamalar
-.env
+# Maxfiy sozlamalar — .env, .env.production, .env.backup va h.k.
+# .env.example dan boshqa hech qaysi .env fayl git'ga tushmasin
+.env*
+!.env.example
 
 # Baza va zaxira nusxalar
 data/
