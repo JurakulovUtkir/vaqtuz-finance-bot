@@ -16,6 +16,7 @@ def test_menu_has_every_action():
         "xls:month",
         "xls:prev",
         "xls:all",
+        "bak:now",
     }
 
 
@@ -24,6 +25,7 @@ def test_menu_buttons_are_labelled_in_uzbek():
     assert "📅 Bugun" in labels
     assert "⏳ Kutilayotgan to'lovlar" in labels
     assert "📥 Butun tarix" in labels
+    assert "💾 Hozir zaxira olish" in labels
 
 
 def test_callback_data_stays_within_telegram_limit():

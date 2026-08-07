@@ -121,6 +121,7 @@ buyruqlarni eslab qolish shart emas:
 — Excel yuklab olish —
 [📥 Joriy oy]  [📥 O'tgan oy]
 [📥 Butun tarix]
+[💾 Hozir zaxira olish]
 ```
 
 Excel faylida 7 ta varaq bor. Eng muhimi — **Kanal narxlari**: qatorlar kanallar,
@@ -136,11 +137,14 @@ Qolgan varaqlar: `Umumiy`, `Kanallar`, `Oylar`, `Haftalar`, `Mijozlar`,
 
 ## Zaxira nusxa
 
-Ikki qatlam:
+Uch qatlam:
 
 1. **Serverda** — har kuni 03:00 da `backups/` ga, 14 kun saqlanadi (cron)
 2. **Adminlarga** — har kuni `BACKUP_TIME` (sukut 02:00) da `.tar.gz` bo'lib
    Telegram orqali yuboriladi
+3. **Talab bo'yicha** — menyudagi `💾 Hozir zaxira olish` tugmasi. Jadvalni
+   kutmasdan shu zahoti nusxa oladi; loyihani boshqa serverga ko'chirishda
+   ham shu ishlatiladi
 
 Ikkinchisi muhim: server yo'qolsa birinchi qatlam ham u bilan yo'qoladi.
 Telegram'dagi nusxa esa serverdan tashqarida turadi.

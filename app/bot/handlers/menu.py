@@ -5,12 +5,14 @@ Buyruqlarni eslab qolish shart emas — shaxsiy chatda tugmalarni bosish yetadi.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
+from app.backup import build_caption, create_archive
 from app.bot.deps import Deps, get_deps
 from app.bot.net import send_with_retry
 from app.bot.reporting import compose_report, daily_title, monthly_title, weekly_title
@@ -49,6 +51,7 @@ def build_menu() -> InlineKeyboardMarkup:
                 InlineKeyboardButton("📥 O'tgan oy", callback_data="xls:prev"),
             ],
             [InlineKeyboardButton("📥 Butun tarix", callback_data="xls:all")],
+            [InlineKeyboardButton("💾 Hozir zaxira olish", callback_data="bak:now")],
         ]
     )
 
@@ -119,6 +122,42 @@ async def _handle_excel(query, deps: Deps, action: str) -> None:
         await _send_text(query, deps, "⚠️ Faylni yuborib bo'lmadi, qaytadan urinib ko'ring.")
 
 
+async def _handle_backup(query, deps: Deps) -> None:
+    """Tugma bosilganda shu zahotiyoq zaxira tayyorlab yuboradi.
+
+    Loyihani boshqa serverga ko'chirishda ham shu ishlatiladi — jadvaldagi
+    02:00 ni kutish shart emas.
+    """
+    now = datetime.now(deps.settings.timezone)
+    try:
+        archive = await asyncio.to_thread(create_archive, deps.settings.db_path, now)
+    except Exception:
+        logger.exception("Zaxira tayyorlanmadi")
+        await _send_text(query, deps, "⚠️ Zaxira tayyorlanmadi. Qaytadan urinib ko'ring.")
+        return
+
+    logger.info(
+        "Qo'lda zaxira: %s (%s KB, %s yozuv)",
+        archive.filename,
+        archive.size_kb,
+        archive.record_count,
+    )
+    try:
+        sent = await send_with_retry(
+            lambda: query.message.reply_document(
+                document=archive.path.read_bytes(),
+                filename=archive.filename,
+                caption=build_caption(archive),
+            ),
+            attempts=deps.settings.send_retries,
+            description="qo'lda zaxira",
+        )
+        if sent is None:
+            await _send_text(query, deps, "⚠️ Faylni yuborib bo'lmadi, qaytadan urinib ko'ring.")
+    finally:
+        archive.cleanup()
+
+
 async def show_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """`/menu` yoki admin `/start` bosganda chiqadi."""
     message = update.message
@@ -158,6 +197,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             await _handle_report(query, deps, action)
         elif kind == "xls":
             await _handle_excel(query, deps, action)
+        elif kind == "bak":
+            await _handle_backup(query, deps)
     except Exception:
         logger.exception("Menyu buyrug'ida xatolik: %s", data)
         await _send_text(query, deps, "⚠️ Xatolik yuz berdi. Qaytadan urinib ko'ring.")
